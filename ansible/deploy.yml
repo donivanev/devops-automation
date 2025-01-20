@@ -1,0 +1,40 @@
+---
+- name: Deploy Docker container on EC2
+  hosts: ec2-instance
+  become: true
+
+  vars_files:
+    - secrets.yml
+
+  tasks:
+    - name: Update APT packages
+      apt:
+        update_cache: yes
+
+    - name: Install Docker
+      apt:
+        name: docker.io
+        state: present
+
+    - name: Start Docker service
+      service:
+        name: docker
+        state: started
+        enabled: true
+
+    - name: Log in to GHCR
+      shell: |
+        echo "{{ ghcr_token }}" | docker login ghcr.io -u "{{ ghcr_username }}" --password-stdin
+      args:
+        executable: /bin/bash
+      environment:
+        ghcr_token: "{{ ghcr_token }}"
+        ghcr_username: "{{ ghcr_username }}"
+
+    - name: Pull Docker image from GHCR
+      shell: |
+        docker pull ghcr.io/donivanev/devops-automation/my-app:latest
+
+    - name: Run Docker container
+      shell: |
+        docker run -d --name my-app -p 80:80 ghcr.io/donivanev/devops-automation/my-app:latest
