@@ -23,18 +23,22 @@
         enabled: true
 
     - name: Log in to GHCR
-      shell: |
-        echo "{{ ghcr_token }}" | docker login ghcr.io -u "{{ ghcr_username }}" --password-stdin
-      args:
-        executable: /bin/bash
-      environment:
-        ghcr_token: "{{ ghcr_token }}"
-        ghcr_username: "{{ ghcr_username }}"
+      docker_login:
+        registry: ghcr.io
+        username: "{{ ghcr_username }}"
+        password: "{{ ghcr_token }}"
 
     - name: Pull Docker image from GHCR
-      shell: |
-        docker pull ghcr.io/donivanev/devops-automation/my-app:latest
+      docker_image:
+        name: ghcr.io/donivanev/devops-automation/my-app
+        tag: latest
+        source: pull
 
     - name: Run Docker container
-      shell: |
-        docker run -d --name my-app -p 80:80 ghcr.io/donivanev/devops-automation/my-app:latest
+      docker_container:
+        name: my-app
+        image: ghcr.io/donivanev/devops-automation/my-app:latest
+        state: started
+        restart_policy: always
+        published_ports:
+          - "80:80"
